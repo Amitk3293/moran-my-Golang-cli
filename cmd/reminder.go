@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -21,15 +20,19 @@ var reminderCmd = &cobra.Command{
 		   to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("reminder called")
-		setReminder, _ := cmd.Flags().GetString("set")
-		setTime, _ := cmd.Flags().GetString("time")
 
-		now := time.Now()
-		duration := time.Since(now)
-		select {
-			case 
-		}
-		
+		// 1. we need a runner to check the time,
+		// 2. create Slack integration.
+		// 3. 
+
+		// setReminder, _ := cmd.Flags().GetString("set")
+		// setTime, _ := cmd.Flags().GetString("time")
+
+		// // now := time.Now()
+		// // duration := time.Since(now)
+		// // select {
+		// // 	case
+		// // }
 
 	},
 }
@@ -37,8 +40,8 @@ var reminderCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(reminderCmd)
 	// Here you will define your flags and configuration settings.
-	createCmd.Flags().StringP("set", "s", "", "set a reminder")
-	createCMD.Flags().StringP("time", "t", "", "set time to the reminder-Minutes for now")
+	reminderCmd.Flags().StringP("set", "s", "", "set a reminder")
+	reminderCmd.Flags().StringP("time", "t", "", "set time to the reminder-Minutes for now")
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
 	// reminderCmd.PersistentFlags().String("foo", "", "A help for foo")
