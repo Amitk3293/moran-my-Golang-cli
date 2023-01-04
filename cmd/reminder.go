@@ -5,6 +5,8 @@ package cmd
 
 import (
 	"fmt"
+	"net/http"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -19,34 +21,38 @@ var reminderCmd = &cobra.Command{
 		   This application is a tool to generate the needed files
 		   to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("reminder called")
-
-		// 1. we need a runner to check the time,
-		// 2. create Slack integration.
-		// 3. 
-
-		// setReminder, _ := cmd.Flags().GetString("set")
-		// setTime, _ := cmd.Flags().GetString("time")
-
-		// // now := time.Now()
-		// // duration := time.Since(now)
-		// // select {
-		// // 	case
-		// // }
-
+		runSlackCommand()
 	},
 }
+var slackMessage string
 
 func init() {
 	rootCmd.AddCommand(reminderCmd)
 	// Here you will define your flags and configuration settings.
 	reminderCmd.Flags().StringP("set", "s", "", "set a reminder")
 	reminderCmd.Flags().StringP("time", "t", "", "set time to the reminder-Minutes for now")
-	// Cobra supports Persistent Flags which will work for this command
+	reminderCmd.Flags().StringVarP(&slackMessage, "message", "m", "", "The message to send to Slack")
 	// and all subcommands, e.g.:
 	// reminderCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// reminderCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+}
+
+func runSlackCommand() {
+	client := &http.Client{}
+	body := fmt.Sprintf(`{"text": "%s"}`, slackMessage)
+	req, err := http.NewRequest("POST", "https://hooks.slack.com/services/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", strings.NewReader(body))
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	req.Header.Add("Content-Type", "application/json")
+	_, err = client.Do(req)
+	if err != nil {
+		fmt.Printf("There was en error: %v", err)
+		return
+	}
+	fmt.Println("Slack message sent successfully!")
 }
