@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -43,7 +44,7 @@ func init() {
 func runSlackCommand() {
 	client := &http.Client{}
 	body := fmt.Sprintf(`{"text": "%s"}`, slackMessage)
-	req, err := http.NewRequest("POST", "https://hooks.slack.com/services/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", strings.NewReader(body))
+	req, err := http.NewRequest("POST", os.Getenv("SLACK_BOT_TOKEN"), strings.NewReader(body))
 	if err != nil {
 		fmt.Println(err)
 		return
