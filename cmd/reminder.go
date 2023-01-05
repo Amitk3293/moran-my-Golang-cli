@@ -44,7 +44,7 @@ func init() {
 func runSlackCommand() {
 	client := &http.Client{}
 	body := fmt.Sprintf(`{"text": "%s"}`, slackMessage)
-	req, err := http.NewRequest("POST", os.Getenv("SLACK_BOT_TOKEN"), strings.NewReader(body))
+	req, err := http.NewRequest("POST", os.Getenv("SLACK_WEBHOOK_URL"), strings.NewReader(body))
 	if err != nil {
 		fmt.Println(err)
 		return
