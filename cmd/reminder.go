@@ -5,11 +5,12 @@ package cmd
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 )
 
 // reminderCmd represents the reminder command
@@ -42,9 +43,24 @@ func init() {
 }
 
 func runSlackCommand() {
+	// Read the YAML file and parse its contents
+	file, err := ioutil.ReadFile("config/config.yaml")
+	if err != nil {
+		fmt.Printf("Error reading config file: %v", err)
+		return
+	}
+	var config struct {
+		SlackWebhookURL string `yaml:"SLACK_WEBHOOK_URL"`
+	}
+	if err := yaml.Unmarshal(file, &config); err != nil {
+		fmt.Printf("Error parsing config file: %v", err)
+		return
+	}
+
+	// Use the value from the YAML file
 	client := &http.Client{}
 	body := fmt.Sprintf(`{"text": "%s"}`, slackMessage)
-	req, err := http.NewRequest("POST", os.Getenv("SLACK_WEBHOOK_URL"), strings.NewReader(body))
+	req, err := http.NewRequest("POST", config.SlackWebhookURL, strings.NewReader(body))
 	if err != nil {
 		fmt.Println(err)
 		return
