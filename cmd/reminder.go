@@ -4,11 +4,13 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 	"os"
 	"strings"
 
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/spf13/cobra"
 )
 
@@ -23,15 +25,18 @@ var reminderCmd = &cobra.Command{
 		   to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		runSlackCommand()
+		storeReminder()
 	},
 }
+
 var slackMessage string
+var reminderText string
 
 func init() {
 	rootCmd.AddCommand(reminderCmd)
 	// Here you will define your flags and configuration settings.
-	reminderCmd.Flags().StringP("set", "s", "", "set a reminder")
-	reminderCmd.Flags().StringP("time", "t", "", "set time to the reminder-Minutes for now")
+	reminderCmd.Flags().StringVarP(&reminderText, "set", "s", "", "set a reminder")
+	// reminderCmd.Flags().StringP("time", "t", "", "set time to the reminder-Minutes for now")
 	reminderCmd.Flags().StringVarP(&slackMessage, "message", "m", "", "The message to send to Slack")
 	// and all subcommands, e.g.:
 	// reminderCmd.PersistentFlags().String("foo", "", "A help for foo")
@@ -56,4 +61,34 @@ func runSlackCommand() {
 		return
 	}
 	fmt.Println("Slack message sent successfully!")
+}
+
+func storeReminder() error {
+	// Open a connection to the SQLite database file
+	db, err := sql.Open("sqlite3", "reminders.db")
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	// Create the table to store the reminder notes
+	_, err = db.Exec(`
+        CREATE TABLE IF NOT EXISTS reminders (
+                id INTEGER PRIMARY KEY,
+                text TEXT NOT NULL
+        )
+    `)
+	if err != nil {
+		fmt.Printf("There was an error in creating DB table: %v", err)
+		return err
+	}
+
+	rowString := fmt.Sprintf(`INSERT INTO reminders (text) VALUES (%q)`, reminderText)
+	// Insert a new reminder note into the table
+	_, err = db.Exec(rowString)
+	if err != nil {
+		fmt.Printf("There was an error in insert values into DB table: \n %v", err)
+		return err
+	}
+	return nil
 }
