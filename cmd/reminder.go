@@ -1,5 +1,5 @@
 /*
-Copyright © 2022 NAME HERE <EMAIL ADDRESS>
+Copyright © 2022 Amit Karni amitkarni3293@gmail.com
 */
 package cmd
 
@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/spf13/cobra"
@@ -47,25 +48,32 @@ func init() {
 	// reminderCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-func runSlackCommand() {
-	// Read the YAML file and parse its contents
+type config struct {
+	SLACK_WEBHOOK_URL string `yaml:"SLACK_WEBHOOK_URL"`
+}
+
+// Read the YAML file and parse its contents
+func (c *config) readConfig() {
 	file, err := ioutil.ReadFile("config/config.yaml")
 	if err != nil {
 		fmt.Printf("Error reading config file: %v", err)
 		return
 	}
-	var config struct {
-		SlackWebhookURL string `yaml:"SLACK_WEBHOOK_URL"`
-	}
-	if err := yaml.Unmarshal(file, &config); err != nil {
+	if err := yaml.Unmarshal(file, &c); err != nil {
 		fmt.Printf("Error parsing config file: %v", err)
 		return
 	}
+}
+
+func runSlackCommand() {
+
+	c := &config{}
+	c.readConfig()
 
 	// Use the value from the YAML file
 	client := &http.Client{}
 	body := fmt.Sprintf(`{"text": "%s"}`, slackMessage)
-	req, err := http.NewRequest("POST", config.SlackWebhookURL, strings.NewReader(body))
+	req, err := http.NewRequest("POST", c.SLACK_WEBHOOK_URL, strings.NewReader(body))
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -91,7 +99,8 @@ func storeReminder() error {
 	_, err = db.Exec(`
         CREATE TABLE IF NOT EXISTS reminders (
                 id INTEGER PRIMARY KEY,
-                text TEXT NOT NULL
+                text TEXT NOT NULL,
+				datetime TIMESTAMP NOT NULL
         )
     `)
 	if err != nil {
@@ -99,8 +108,14 @@ func storeReminder() error {
 		return err
 	}
 
-	rowString := fmt.Sprintf(`INSERT INTO reminders (text) VALUES (%q)`, reminderText)
-	// Insert a new reminder note into the table
+	// Get the current time
+	now := time.Now().Format("2006-01-02 15:04:05")
+	// now := time.Now().Unix()
+	fmt.Println(now)
+
+	// Insert the reminder note w text and current timestamp into the table
+	rowString := fmt.Sprintf(`INSERT INTO reminders (text, datetime) VALUES (%q, %q)`, reminderText, now)
+	fmt.Println(rowString)
 	_, err = db.Exec(rowString)
 	if err != nil {
 		fmt.Printf("There was an error in insert values into DB table: \n %v", err)
